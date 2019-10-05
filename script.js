@@ -16,6 +16,7 @@ var AudioContext = window.AudioContext || window.webkitAudioContext || window.mo
 	blackBg = true,
 	clickable = true,
 	level = 1,
+	ratio = 0.5,
 	voices = [],
 	_x, _y;
 
@@ -42,9 +43,9 @@ function Modulator(freq) {
 	this.osc = aContext.createOscillator();
 	this.gain = aContext.createGain();
 	this.osc.type = 'sine';
-	this.osc.frequency.setValueAtTime((freq * 7), aContext.currentTime);
+	this.osc.frequency.setValueAtTime((convertRange(freq) * ratio), aContext.currentTime);
 	this.osc.connect(this.gain);
-	this.gain.gain.setValueAtTime(1, aContext.currentTime);
+	this.gain.gain.setValueAtTime(5000, aContext.currentTime);
 	this.osc.start(0);
 }
 
@@ -103,6 +104,7 @@ function endLevel() {
 	}
 
 	blackBg = !blackBg;
+	ratio *= 1.5;
 	level++;
 
 	initLevel();
