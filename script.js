@@ -21,9 +21,8 @@ var AudioContext = window.AudioContext || window.webkitAudioContext || window.mo
 	_x, _y;
 
 
-//scale the x coordinate to a value between 40hz and 8khz
-function convertRange(value) { 
-    return value * 7960 / playfield.offsetWidth + 40;
+function convertRange(value, r1, r2) { 
+    return (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0]) + r2[0];
 }
 
 //audio stuff~~
@@ -33,7 +32,7 @@ function Carrier(freq) {
 	this.osc = aContext.createOscillator();
 	this.gain = aContext.createGain();
 	this.osc.type = 'sine';
-	this.osc.frequency.setValueAtTime(convertRange(freq), aContext.currentTime);
+	this.osc.frequency.setValueAtTime(convertRange(freq, [0,playfield.offsetWidth], [40,8000]), aContext.currentTime);
 	this.osc.connect(this.gain);
 	this.gain.gain.setValueAtTime(0.3, aContext.currentTime);
 	this.osc.start(0);
@@ -43,7 +42,7 @@ function Modulator(freq) {
 	this.osc = aContext.createOscillator();
 	this.gain = aContext.createGain();
 	this.osc.type = 'sine';
-	this.osc.frequency.setValueAtTime((convertRange(freq) * ratio), aContext.currentTime);
+	this.osc.frequency.setValueAtTime((convertRange(freq, [0,playfield.offsetHeight],[20,20000]) * ratio), aContext.currentTime);
 	this.osc.connect(this.gain);
 	this.gain.gain.setValueAtTime(5000, aContext.currentTime);
 	this.osc.start(0);
@@ -59,13 +58,45 @@ function Lfo() {
 	this.osc.start(0);
 }
 
+function Panner(x, y) {
+	var _x = convertRange(x, [0,playfield.offsetWidth],[-1,1]),
+		_y = convertRange(y, [0,playfield.offsetHeight],[-1,1]);
+
+	this.pan = aContext.createPanner();
+	this.pan.panningModel = 'HRTF';
+	this.pan.distanceModel = 'inverse';
+	this.pan.refDistance = 1;
+	this.pan.maxDistance = 1;
+	this.pan.rolloffFactor = 1;
+	this.pan.coneInnerAngle = 360;
+	this.pan.coneOuterAngle = 0;
+
+	if (this.pan.orientationX) {
+		this.pan.orientationX.setValueAtTime(1, aContext.currentTime);
+		this.pan.orientationY.setValueAtTime(1, aContext.currentTime);
+		this.pan.orientationZ.setValueAtTime(0, aContext.currentTime);
+	} else {
+		this.pan.setOrientation(1,0,0);
+	}
+
+	if (this.pan.positionX) {
+		this.pan.positionX.setValueAtTime(_x, aContext.currentTime);
+		this.pan.positionY.setValueAtTime(_y, aContext.currentTime);
+		this.pan.positionZ.setValueAtTime(0, aContext.currentTime);
+	} else {
+		this.pan.setPosition(_x, _y, 0);
+	}
+}
+
 function Voice(x,y) {
 	this.carrier = new Carrier(x);
 	this.modulator = new Modulator(y);
 	this.lfo = new Lfo();
+	this.panner = new Panner(x,y);
 	this.gain = aContext.createGain();
 	this.modulator.gain.connect(this.carrier.osc.frequency);
-	this.carrier.gain.connect(this.gain);
+	this.carrier.gain.connect(this.panner.pan);
+	this.panner.pan.connect(this.gain);
 	this.lfo.gain.connect(this.gain.gain);
 	this.lfo.gain.connect(this.modulator.osc.frequency);
 	this.lfo.gain.connect(this.carrier.osc.frequency);
