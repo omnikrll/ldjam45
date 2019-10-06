@@ -143,70 +143,70 @@ function endLevel() {
 
 //the magic happens on each click
 function clickHandler(event) {
-	if (clickable) {
+	if (!clickable) return;
+
 	//keep our clicks under control
-		event.stopPropagation();
+	event.stopPropagation();
 
-		//debug text
-		var debugString = '_x: ' + _x + ' _y: ' + _y + '<br>' + event.clientX + ', ' + event.clientY;
+	//debug text
+	var debugString = '_x: ' + _x + ' _y: ' + _y + '<br>' + event.clientX + ', ' + event.clientY;
 
-		//if we clicked the goal
-		if ((Math.abs(_x - event.clientX) <= tolerance) && (Math.abs(_y - event.clientY) <= tolerance)) {
-			clickable = false;
+	//if we clicked the goal
+	if ((Math.abs(_x - event.clientX) <= tolerance) && (Math.abs(_y - event.clientY) <= tolerance)) {
+		clickable = false;
 
-			for (var i in voices) {
-				voices[i].carrier.osc.stop(aContext.currentTime);
-				voices[i].modulator.osc.stop(aContext.currentTime);
-				voices[i].lfo.osc.stop(aContext.currentTime);
+		for (var i in voices) {
+			voices[i].carrier.osc.stop(aContext.currentTime);
+			voices[i].modulator.osc.stop(aContext.currentTime);
+			voices[i].lfo.osc.stop(aContext.currentTime);
 
-				delete voices[i];
-			}
-
-			voices = [];
-
-			//we create the div, style and position it
-			var newDiv = document.createElement('div');
-			newDiv.className = 'circle_of_death';
-			newDiv.style.left = event.clientX + 'px';
-			newDiv.style.top = event.clientY + 'px';
-			newDiv.style.background = blackBg ? 'white' : 'black';
-
-			//when its css animation ends, advance levels
-			newDiv.addEventListener('animationend', endLevel, false);
-
-			//add it to the dom
-			playfield.appendChild(newDiv);
-			sidnoise.pause();
-			sidnoise.currentTime = 0;
-			sidnoise.play();
-
-			//debug text
-			debugString += '<br>advance level';
-		} else { //if we didn't click the goal
-			var voice = new Voice(event.clientX, event.clientY);
-			voices.push(voice);
-
-			//pick which set of emojis to use
-			var _emojis = ((Math.abs(_x - event.clientX) <= (tolerance * tMod)) && (Math.abs(_y - event.clientY) <= (tolerance * tMod))) ? hearts : emojis,
-				//create a div and a text node for the emoji
-				newDiv = document.createElement('div'),
-				emoji = _emojis[Math.floor(Math.random() * _emojis.length)],
-				content = document.createTextNode(emoji);
-
-			//put the emoji in the div, position it, add it to the dom
-			newDiv.appendChild(content);
-			newDiv.className = 'emoji';
-			newDiv.style.left = event.clientX + 'px';
-			newDiv.style.top = event.clientY + 'px';
-			playfield.appendChild(newDiv);
-
-			//debug text
-			debugString += '<br>insert an emoji into the doc at these coordinates and play a sound';
+			delete voices[i];
 		}
 
-		//update debug text in document
-		debugOutput.innerHTML = debugString;
+		voices = [];
+
+		//we create the div, style and position it
+		var newDiv = document.createElement('div');
+		newDiv.className = 'circle_of_death';
+		newDiv.style.left = event.clientX + 'px';
+		newDiv.style.top = event.clientY + 'px';
+		newDiv.style.background = blackBg ? 'white' : 'black';
+
+		//when its css animation ends, advance levels
+		newDiv.addEventListener('animationend', endLevel, false);
+
+		//add it to the dom
+		playfield.appendChild(newDiv);
+		sidnoise.pause();
+		sidnoise.currentTime = 0;
+		sidnoise.play();
+
+		//debug text
+		debugString += '<br>advance level';
+	} else { //if we didn't click the goal
+		var voice = new Voice(event.clientX, event.clientY);
+		voices.push(voice);
+
+		//pick which set of emojis to use
+		var _emojis = ((Math.abs(_x - event.clientX) <= (tolerance * tMod)) && (Math.abs(_y - event.clientY) <= (tolerance * tMod))) ? hearts : emojis,
+			//create a div and a text node for the emoji
+			newDiv = document.createElement('div'),
+			emoji = _emojis[Math.floor(Math.random() * _emojis.length)],
+			content = document.createTextNode(emoji);
+
+		//put the emoji in the div, position it, add it to the dom
+		newDiv.appendChild(content);
+		newDiv.className = 'emoji';
+		newDiv.style.left = event.clientX + 'px';
+		newDiv.style.top = event.clientY + 'px';
+		playfield.appendChild(newDiv);
+
+		//debug text
+		debugString += '<br>insert an emoji into the doc at these coordinates and play a sound';
 	}
+
+	//update debug text in document
+	debugOutput.innerHTML = debugString;
 }
 
 playfield.addEventListener('click', clickHandler);
